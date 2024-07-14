@@ -154,24 +154,31 @@ function App() {
   }
 
   async function fetchAISummary(data: object) {
-    const cacheKey = `aisummary_${JSON.stringify(data)}`;
-    const cachedData = localStorage.getItem(cacheKey);
+    try {
+      const cacheKey = `aisummary_${JSON.stringify(data)}`;
+      const cachedData = localStorage.getItem(cacheKey);
 
-    if (cachedData) {
-      return JSON.parse(cachedData);
+      if (cachedData) {
+        return JSON.parse(cachedData);
+      }
+      if (Object.keys(data).length === 0) {
+        return 'No summary available as there is no transaction record';
+      }
+      const model = genAI.getGenerativeModel({
+        model: 'gemini-1.5-flash',
+        systemInstruction: `You are a large language model extensively trained in Solana Program's Interface Description Language. I am providing some data in JSON format which represents the data about a given transaction/transactions. Your summary should be a general overview and must not exceed 60 words. You can only exceed the constraint if the data is an array of transactions, in that case, you can output more words but in the given format: <x> tokens transferred from <source_address> to <destination_address> and vice vera (you get the gist). Carefully analyze the provided data and return a concise summary of what's going on in the transaction/transactions. The data is not just an array of placeholder inputs, you should parse the data and provide insights, said data is - ${JSON.stringify(
+          data
+        )}`,
+      });
+      const prompt = `Analyze and draw insights`;
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const text = await response.text();
+      localStorage.setItem(cacheKey, JSON.stringify(text));
+      return text;
+    } catch (error) {
+      console.error(error);
     }
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
-      systemInstruction: `You are a large language model extensively trained in Solana Program's Interface Description Language. I am providing some data in JSON format which represents the data about a given transaction/transactions. Your summary should be a general overview and must not exceed 60 words. You can only exceed the constraint if the data is an array of transactions, in that case, you can output more words but in the given format: <x> tokens transferred from <source_address> to <destination_address> and vice vera (you get the gist). Carefully analyze the provided data and return a concise summary of what's going on in the transaction/transactions. The data is not just an array of placeholder inputs, you should parse the data and provide insights, said data is - ${JSON.stringify(
-        data
-      )}`,
-    });
-    const prompt = `Analyze and draw insights`;
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = await response.text();
-    localStorage.setItem(cacheKey, JSON.stringify(text));
-    return text;
   }
 
   const renderData = () => {
@@ -216,7 +223,10 @@ function App() {
             <p>
               <strong>AI Summary:</strong> {aiSummary || 'Summary unavailable'}
             </p>
-            <p>Here are the transaction details:</p>
+            {transactions.length > 0 && (
+              <p>Here are the transaction details:</p>
+            )}
+
             <ul style={{ listStyleType: 'none', paddingLeft: 0 }}>
               {solanaDataType === 'accountAddress'
                 ? transactions.map(
