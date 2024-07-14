@@ -8,6 +8,12 @@ Requirements:
 - User Experience: Create an intuitive and user-friendly interface.
 - Deployment: Ensure the explorer or dashboard can be tested and deployed on Cloudflare or Vercel.
 
+# Demo video
+
+```
+https://www.loom.com/share/5e2229c0242942728e1c043148a11cdf
+```
+
 # Install dependencies
 
 ```shell
