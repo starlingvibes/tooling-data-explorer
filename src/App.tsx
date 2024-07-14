@@ -155,14 +155,14 @@ function App() {
 
   async function fetchAISummary(data: object) {
     try {
+      if (Object.keys(data).length === 0) {
+        return 'No summary available as there is no transaction record';
+      }
       const cacheKey = `aisummary_${JSON.stringify(data)}`;
       const cachedData = localStorage.getItem(cacheKey);
 
       if (cachedData) {
         return JSON.parse(cachedData);
-      }
-      if (Object.keys(data).length === 0) {
-        return 'No summary available as there is no transaction record';
       }
       const model = genAI.getGenerativeModel({
         model: 'gemini-1.5-flash',
@@ -201,10 +201,7 @@ function App() {
         {!isLoading && inputValue === '' && (
           <p>Input a valid solana address or transaction hash</p>
         )}
-        {isLoading && inputValue !== '' && <p>Loading...</p>}
-        {isLoading && !solanaData && aiSummary === '' && (
-          <p>Fetching AI summary ...</p>
-        )}
+        {isLoading && inputValue !== '' && <p>Fetching AI summary...</p>}
         {!isLoading && !transactions && <p>No data available.</p>}
         {!isLoading && transactions && aiSummary !== '' && (
           <div>
@@ -244,10 +241,6 @@ function App() {
                           <strong>Transaction hash:</strong>{' '}
                           {transaction.signature}
                         </p>
-                        {/* <p>
-                          <strong>Description:</strong>{' '}
-                          {transaction.description}
-                        </p> */}
                         {transaction.description && (
                           <p>
                             <strong>Description:</strong>{' '}
